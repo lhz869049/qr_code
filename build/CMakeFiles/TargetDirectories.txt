@@ -1,0 +1,3 @@
+/home/lhz/aero/qrcode_scan/build/CMakeFiles/rebuild_cache.dir
+/home/lhz/aero/qrcode_scan/build/CMakeFiles/main.dir
+/home/lhz/aero/qrcode_scan/build/CMakeFiles/edit_cache.dir

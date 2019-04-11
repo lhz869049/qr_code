@@ -1,9 +1,18 @@
+/**@file detect_qrcode.cpp
+ * @author luhz
+ * @version 2.0.1
+ * @date  2019-04-09
+ * 
+ * @brief
+ * 实现detect_qrcoded的函数
+ * 
+*/
 #include "detect_qrcode.h"
 
-
-
 double these = 0.03;
-//选取更集中区域
+/**选取区域更加集中的区域
+ * @param src : 输入的图片
+*/
 Mat QR_detecter::get_rect(Mat src) {
 	Mat graysrc, thessrc;
 	cvtColor(src, graysrc, CV_BGR2GRAY);
@@ -49,6 +58,11 @@ Mat QR_detecter::get_rect(Mat src) {
 	return maskk;
 }
 
+/**计算四点构成的两条直线的交点
+ * @param A B ： 这两个点构成其中一条直线
+ * @param C D ： 这两个点构成另外一条直线
+ * @param return  两条直线的交点【point2f】
+*/
 Point2f QR_detecter::getCrossPoint(Point2f A, Point2f B, Point2f C, Point2f D){
 	if (A == B || A == C || A == D || B == C || B == D || C == D)
 		return Point2f(0, 0);
@@ -67,10 +81,19 @@ Point2f QR_detecter::getCrossPoint(Point2f A, Point2f B, Point2f C, Point2f D){
 	}
 }
 
+/**计算两点的距离
+ * @param a b ：   两点
+ * @param return  两点的距离【float】
+*/
 float QR_detecter::getDistance(Point2f a, Point2f b) {
 	return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
 }
 
+/**三点围成的角度
+ * @param cen ：  中心点，夹角点
+ * @param first , second : 除去中点之外的点，顺序无所谓
+ * @param return  ：  角度【float】
+*/
 float QR_detecter::angle(Point2f cen, Point2f first, Point2f second){
 	const float My_PI = 3.1415926535897;
 
@@ -87,7 +110,10 @@ float QR_detecter::angle(Point2f cen, Point2f first, Point2f second){
 	return angleAMB;
 }
 
-// 找凸包
+/**寻找凸包
+ * @param img ：  集中区域图片
+ * @param return  ：  包含凸包的Mat
+*/
 Mat QR_detecter::get_hull(Mat img){
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -103,7 +129,7 @@ Mat QR_detecter::get_hull(Mat img){
 	for (int i = 0; i < contours.size(); i++) {
 		convexHull(Mat(contours[i]), hull[i]);
 	}
-
+	//！ 计算面积最大的凸包
 	Mat b = Mat::zeros(the.size(), CV_8UC3);
 	for (int i = 0; i < contours.size(); i++) {
 		contour_area_temp = fabs(contourArea(hull[i]));
@@ -116,9 +142,14 @@ Mat QR_detecter::get_hull(Mat img){
 	return b;
 }
 
+/**寻找构成角度比较大的点
+ * @param corner ：   角点检测出来的拐点
+ * @param return  ：  构成角度比较大的点
+*/
 vector<Point2f> QR_detecter::find_bigger_corner(vector<Point2f> corner) {
 	vector<Point2f> big_corner;
 	vector<Point2f>::iterator at1, at2;
+	//！ big_angle从107开始，可以适当改变
 	float big_angle = 107;
 	do{
 		//判断角度大于110
@@ -164,6 +195,10 @@ vector<Point2f> QR_detecter::find_bigger_corner(vector<Point2f> corner) {
 	return big_corner;
 }
 
+/**寻找线的交点
+ * @param big_corner ：   构成角度比较大的点
+ * @param return  ：  返回这些点构的线的交点【有两个】
+*/
 vector<Point2f> QR_detecter::cacuate_cross_vector(vector<Point2f>big_corner) {
 	vector<Point2f>::iterator it, it1;
 	vector<Point2f> tmp;
@@ -176,6 +211,7 @@ vector<Point2f> QR_detecter::cacuate_cross_vector(vector<Point2f>big_corner) {
 					tp = getCrossPoint(big_corner[i], big_corner[j], big_corner[k], big_corner[l]);
 					if (tp != big_corner[i] && tp != big_corner[j] && tp != big_corner[k] && 
 						tp != big_corner[l] && tp != Point2f(0, 0) && tp.x<230&&tp.y<230) 
+						//！tp.x<230和图片的size挂钩，为了防止计算的点超出图片范围
 					{
 						tmp.push_back(tp);
 					}
@@ -195,7 +231,12 @@ vector<Point2f> QR_detecter::cacuate_cross_vector(vector<Point2f>big_corner) {
 	return tmp;
 }
 
+/**对corners按照方位进行排序
+ * @param corners ：  交点集
+ * @param return  ：  排序后的交点集
+*/
 vector<Point2f> QR_detecter::sort_point(vector<Point2f>corners) {
+	//！计算四点的中心点
 	Point2f center = Point(100,100);
 	vector<Point2f> sort_corners(4);
 	for (int i = 0; i < corners.size(); i++)
@@ -205,7 +246,7 @@ vector<Point2f> QR_detecter::sort_point(vector<Point2f>corners) {
 	}
 	center.x = center.x / corners.size();
 	center.y = center.y / corners.size();
-
+	//！根据点的位置来确定顺序
 	for (int i = 0; i < corners.size(); i++) {
 		if (corners[i].x > center.x&&corners[i].y < center.y)
 			sort_corners.insert(sort_corners.begin(), corners[i]);
@@ -232,6 +273,11 @@ vector<Point2f> QR_detecter::sort_point(vector<Point2f>corners) {
 	return sort_corners;
 }
 
+/**判断照片是否能识别
+ * @param imageSource ： 输入的图片【灰度图或者二值图】
+ * @param return  ：  能否识别
+ * 需要用到zbar外部库
+*/
 bool QR_detecter::can_detect(Mat imageSource){
 	ImageScanner scanner;      
 	scanner.set_config(ZBAR_NONE, ZBAR_CFG_ENABLE, 1); 
@@ -255,6 +301,10 @@ bool QR_detecter::can_detect(Mat imageSource){
 	return true;
 }
 
+/**判断照片是否能不相等
+ * @param a,b,c,d ：  代表图片的下标
+ * @param return  ：  是否相等
+*/
 bool QR_detecter::not_equal(int a, int b, int c, int d){
 	if((a-b!=0)&&(a-c!=0)&&(a-d!=0)&&(b-c!=0)&&(b-d!=0)&&(c-d!=0))
 		return true;
@@ -262,6 +312,10 @@ bool QR_detecter::not_equal(int a, int b, int c, int d){
 		return false;
 }
 
+/**组合四张图片并判断能否识别
+ * @param src[4]  ：  处理后的图片四张
+ * @param return  ：  组合后的图片
+*/
 Mat QR_detecter::combine_pic(Mat src[4]){
 	Rect rec1(0, 0, 210, 210), rec2(10, 0, 210, 210), rec3(0, 10, 210, 210), rec4(10, 10, 210, 210);
 	Mat imageSource,combine1,combine2;
@@ -270,6 +324,7 @@ Mat QR_detecter::combine_pic(Mat src[4]){
 			for(int k=0;k<4;k++){
 				for(int l=0;l<4;l++){
 					if(not_equal(i,j,k,l)){
+						//！ 剪切图片并合并
 						Mat a = src[i];
 						Mat b = src[j];
 						Mat c = src[k];
@@ -294,6 +349,9 @@ Mat QR_detecter::combine_pic(Mat src[4]){
 
 }
 
+/**识别的主要函数
+ * @param a,b,c,d ：  输入的四张飞机拍摄图片
+*/
 void QR_detecter::detect(Mat a,Mat b,Mat c,Mat d) {
 	Mat src[4],out_put[4];
 	src[0] = a;
@@ -302,7 +360,7 @@ void QR_detecter::detect(Mat a,Mat b,Mat c,Mat d) {
 	src[3] = d;
 	
 	for (int kk = 0; kk < 4; kk++) {
-
+		//!这个size需要具体测试
 		resize(src[kk], src[kk], Size(src[kk].cols / 2, src[kk].cols / 2));
 
 		Mat rough_pic, accurate_pic;

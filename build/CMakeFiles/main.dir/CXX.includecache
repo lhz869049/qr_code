@@ -30,7 +30,7 @@ vector
 zbar.h
 -
 
-/home/lhz/aero/qrcode_scan/src/main.cpp
+/home/lhz/aero/qrcode_scan/src/detect_qrcode.cpp
 detect_qrcode.h
 /home/lhz/aero/qrcode_scan/src/detect_qrcode.h
 

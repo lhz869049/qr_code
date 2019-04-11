@@ -1,8 +1,8 @@
 /****************************************************
  *  *
  *                                                  *
- * @file    detect_qrcode.hpp                       *
- * @brief   detect the qrcode                       *
+ * @file    detect_qrcode.h                         *
+ * @brief   detect the qrcode   定义各种函数          *
  * @author  Lu Huaizhi                              *
  * @email   luhzh5@mail2.sysu.edu.cn                *
  * @date    2019-04-09                              *
@@ -22,15 +22,6 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <math.h>
-/**@file detect_qrcode.h
- * @author luhz
- * @version 2.0.1
- * @date  2019-04-09
- * 
- * @brief
- * 定义各种函数
- * 
-*/
 #include <string>
 #include <fstream>
 #include <math.h>

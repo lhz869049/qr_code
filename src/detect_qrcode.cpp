@@ -18,7 +18,7 @@ Mat QR_detecter::get_rect(Mat src) {
 	cvtColor(src, graysrc, CV_BGR2GRAY);
 	//此处阈值的选取很重要，可以弄个滑块  80-255   
 	threshold(graysrc, thessrc, 80, 255.0, CV_THRESH_BINARY);
-	GaussianBlur(thessrc, thessrc, Size(5, 5), 0, 0);  //高斯滤波
+	GaussianBlur(thessrc, thessrc, Size(3, 3), 0, 0);  //高斯滤波
 
 	//获取自定义核
 	Mat element = getStructuringElement(MORPH_RECT, Size(3, 3)); //第一个参数MORPH_RECT表示矩形的卷积核
@@ -288,7 +288,7 @@ bool QR_detecter::can_detect(Mat imageSource){
 	scanner.scan(imageZbar); //扫描条码    
 	Image::SymbolIterator symbol = imageZbar.symbol_begin();
 	if(imageZbar.symbol_begin()==imageZbar.symbol_end())  
-	{  
+	{
 		return false;
 	}  
 	for(;symbol != imageZbar.symbol_end();++symbol)    
@@ -360,13 +360,13 @@ void QR_detecter::detect(Mat a,Mat b,Mat c,Mat d) {
 	src[3] = d;
 	
 	for (int kk = 0; kk < 4; kk++) {
-		//!这个size需要具体测试
-		resize(src[kk], src[kk], Size(src[kk].cols / 2, src[kk].cols / 2));
+		//! 这个size需要具体测试!!!!!!!!!!!!!!!!!!!!!
+		resize(src[kk], src[kk], Size(src[kk].cols / 2 , src[kk].cols / 2));
 
 		Mat rough_pic, accurate_pic;
 		rough_pic = get_rect(src[kk]);
 
-		//扩充图片
+		//！ 扩充图片
 		Mat img2 = Mat::zeros(220, 220, rough_pic.type());
 		//bitwise_not(img2, img2); //白背景
 		Mat roi_img = img2(Rect(10, 10, 200, 200));
@@ -380,8 +380,7 @@ void QR_detecter::detect(Mat a,Mat b,Mat c,Mat d) {
 
 		//====判断是否符合交点要求
 
-		GaussianBlur(b, b, Size(9, 11), 0, 0);
-		//blur(b, b, Size(5, 5));
+		GaussianBlur(b, b, Size(7, 9), 0, 0);
 		vector<Point2f>corners;
 		Mat graypic;
 		cvtColor(b, graypic, CV_BGR2GRAY);
@@ -444,7 +443,6 @@ void QR_detecter::detect(Mat a,Mat b,Mat c,Mat d) {
 
 		//! 把计算出的交点push进去
 		corners.push_back(real_cross);
-
 		//! 对点进行方位上的排序
 		vector<Point2f> sort_corners = sort_point(corners);
 
@@ -455,6 +453,7 @@ void QR_detecter::detect(Mat a,Mat b,Mat c,Mat d) {
 			srcTri[i] = sort_corners[i];
 			circle(b, sort_corners[i], 2, Scalar(255, 0, 233), 2);
 		}
+		//imshow("bd",b);
 		dstTri[2] = Point(0, 0);
 		dstTri[0] = Point(warp_img.cols, 0);
 		dstTri[3] = Point(warp_img.cols, warp_img.rows);

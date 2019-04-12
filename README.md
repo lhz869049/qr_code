@@ -1,6 +1,7 @@
 ## 准确定位二维码位置并识别二维码
 - Author: Lu Huaizhi
-- Date: 2019-04-09
+- Email:  luhzh5@mail2.sysu.edu.cn
+- Date:   2019-04-09
 - Version: 2.0.1
 - abstract: 定位二维码并识别
 ----
@@ -10,10 +11,10 @@ V2.0.1
 实现对含有十字架的二维码的提取
 ```
 ### 依赖
-- Opencv 3.4v
+- Opencv 3.4
 - Zbar[识别库]
 
-### 文件结构v
+### 文件结构
 ```
 ├── CMakeLists.txt
 ├── README.md
@@ -43,3 +44,7 @@ cmake ..
 make
 ./main
 ```
+
+### 调试顺序
+1. get_rect 的阈值 高斯核
+2. detect 的 size
